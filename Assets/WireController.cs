@@ -2,9 +2,13 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.VFX;
 
 public class WireController : MonoBehaviour
 {
+    [SerializeField]
+    private VisualEffect wireVFX;
+
     [Header("Animation Time")]
     [SerializeField]
     [Range(0f, 1f)]
@@ -22,8 +26,19 @@ public class WireController : MonoBehaviour
 
     [Header("Wire Animation ")]
     [SerializeField]
-    private Vector2 maxWireWidth = new Vector2(1, 1);
+    private float wireThickness = .2f;
 
+    [SerializeField]
+    private AnimationCurve wireThicknessOvertime;
+    [SerializeField]
+    private Vector2 maxWireDeviationWidth = new Vector2(1, 1);
+
+    [Header("WireNoise")]
+    [SerializeField] float wireMaxNoise = 2;
+
+    [SerializeField]
+    private AnimationCurve wireNoiseOverTime;
+    
     [Header("Wire Mid Start Animation Curve")]
     [SerializeField]
     private AnimationCurve midStartAnimation_X;
@@ -44,6 +59,16 @@ public class WireController : MonoBehaviour
     [SerializeField]
     private AnimationCurve midEndAnimation_Z;
 
+    [Header("Wire End Animation Curve")]
+    [SerializeField]
+    private AnimationCurve endAnimation_X;
+
+    [SerializeField]
+    private AnimationCurve endAnimation_Y;
+
+    [SerializeField]
+    private AnimationCurve endAnimation_Z;
+
     [Space(10f)]
     [Header("Target")]
     [SerializeField]
@@ -60,6 +85,11 @@ public class WireController : MonoBehaviour
         if (!animator)
         {
             animator = GetComponent<Animator>();
+        }
+
+        if (!wireVFX)
+        {
+            wireVFX = GetComponentInChildren<VisualEffect>();
         }
 
         lastTime = time;
@@ -83,6 +113,7 @@ public class WireController : MonoBehaviour
         {
             UpdateWire();
         }
+
         if (Math.Abs(time - lastTime) > .001f)
         {
             UpdateWireAnimation();
@@ -90,6 +121,7 @@ public class WireController : MonoBehaviour
 
         lastTime = time;
     }
+
     void UpdateWire()
     {
         if (!targetTransform)
@@ -110,6 +142,7 @@ public class WireController : MonoBehaviour
             return;
         }
 
+        //updating arc points
         if (time == 0)
         {
             foreach (Transform t in arcPoints)
@@ -119,13 +152,19 @@ public class WireController : MonoBehaviour
         }
         else
         {
-            arcPoints[3].transform.position = transform.position+ targetDir*(targetMag*time);
-            arcPoints[1].position=SetArcPoint(arcPoints[1].localPosition, midStartAnimation_X, midStartAnimation_Y, midStartAnimation_Z);
-            arcPoints[2].position=SetArcPoint(arcPoints[2].localPosition, midEndAnimation_X, midEndAnimation_Y, midEndAnimation_Z);
+            arcPoints[3].position =
+                SetArcPoint(arcPoints[3].localPosition, endAnimation_X, endAnimation_Y, endAnimation_Z);
+            arcPoints[1].position = SetArcPoint(arcPoints[1].localPosition, midStartAnimation_X, midStartAnimation_Y,
+                midStartAnimation_Z);
+            arcPoints[2].position = SetArcPoint(arcPoints[2].localPosition, midEndAnimation_X, midEndAnimation_Y,
+                midEndAnimation_Z);
         }
+        
+        //updating thickness
+        wireVFX.SetFloat("Thickness",wireThickness*wireThicknessOvertime.Evaluate(time));
+        
+        wireVFX.SetFloat("NoiseRange",wireNoiseOverTime.Evaluate(time));
     }
-
-
 
 
     public void SetTarget(Transform t)
@@ -133,13 +172,13 @@ public class WireController : MonoBehaviour
         targetTransform = t;
     }
 
-    public Vector3 SetArcPoint( Vector3 arcPoint, AnimationCurve x, AnimationCurve y, AnimationCurve z)
+    public Vector3 SetArcPoint(Vector3 arcPoint, AnimationCurve x, AnimationCurve y, AnimationCurve z)
     {
         Vector3 evaluatedTime = new Vector3(x.Evaluate(time), y.Evaluate(time), z.Evaluate(time));
         arcPoint = targetDir * (targetMag * evaluatedTime.z);
-        arcPoint += transform.right * (maxWireWidth.x * evaluatedTime.x);
-        arcPoint += transform.up * (maxWireWidth.y * evaluatedTime.y);
-        
+        arcPoint += transform.right * (maxWireDeviationWidth.x * evaluatedTime.x);
+        arcPoint += transform.up * (maxWireDeviationWidth.y * evaluatedTime.y);
+
         arcPoint = transform.position + arcPoint;
         return arcPoint;
     }
@@ -149,10 +188,9 @@ public class WireController : MonoBehaviour
         animator.SetBool("Shoot", b);
         if (false)
         {
-            
         }
     }
-    
+
     public void ToggleFire()
     {
         activeWire = !activeWire;

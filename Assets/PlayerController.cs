@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     [SerializeField]
-    private WireController wireController;
+    private WireHandController wireHandController;
     
     // Start is called before the first frame update
     void Start()
@@ -16,6 +16,6 @@ public class PlayerController : MonoBehaviour
 
     public void OnShoot(InputValue inputValue)
     {
-        wireController.ToggleFire();
+        wireHandController.ToggleFire();
     }
 }
