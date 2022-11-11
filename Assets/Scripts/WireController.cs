@@ -30,15 +30,17 @@ public class WireController : MonoBehaviour
 
     [SerializeField]
     private AnimationCurve wireThicknessOvertime;
+
     [SerializeField]
     private Vector2 maxWireDeviationWidth = new Vector2(1, 1);
 
     [Header("WireNoise")]
-    [SerializeField] float wireMaxNoise = 2;
+    [SerializeField]
+    float wireMaxNoise = 2;
 
     [SerializeField]
     private AnimationCurve wireNoiseOverTime;
-    
+
     [Header("Wire Mid Start Animation Curve")]
     [SerializeField]
     private AnimationCurve midStartAnimation_X;
@@ -109,10 +111,7 @@ public class WireController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (targetTransform)
-        {
-            UpdateWire();
-        }
+        UpdateWire();
 
         if (Math.Abs(time - lastTime) > .001f)
         {
@@ -124,24 +123,18 @@ public class WireController : MonoBehaviour
 
     void UpdateWire()
     {
-        if (!targetTransform)
+        if (targetTransform)
         {
-            return;
+            targetDir = (targetTransform.position - transform.position);
+            targetMag = Vector3.Magnitude(targetDir);
         }
 
-        targetDir = (targetTransform.position - transform.position);
-        targetMag = Vector3.Magnitude(targetDir);
         targetDir = targetDir.normalized;
         transform.forward = targetDir.normalized;
     }
 
     void UpdateWireAnimation()
     {
-        if (!targetTransform)
-        {
-            return;
-        }
-
         //updating arc points
         if (time == 0)
         {
@@ -159,11 +152,11 @@ public class WireController : MonoBehaviour
             arcPoints[2].position = SetArcPoint(arcPoints[2].localPosition, midEndAnimation_X, midEndAnimation_Y,
                 midEndAnimation_Z);
         }
-        
+
         //updating thickness
-        wireVFX.SetFloat("Thickness",wireThickness*wireThicknessOvertime.Evaluate(time));
-        
-        wireVFX.SetFloat("NoiseRange",wireNoiseOverTime.Evaluate(time));
+        wireVFX.SetFloat("Thickness", wireThickness * wireThicknessOvertime.Evaluate(time));
+
+        wireVFX.SetFloat("NoiseRange", wireNoiseOverTime.Evaluate(time));
     }
 
 
@@ -183,17 +176,22 @@ public class WireController : MonoBehaviour
         return arcPoint;
     }
 
-    public void SetFire(bool b)
+    public void SetFire(bool b, Transform t)
     {
         animator.SetBool("Shoot", b);
-        if (false)
+        if (b)
         {
+            SetTarget(t);
+        }
+        else
+        {
+            SetTarget(null);
         }
     }
 
-    public void ToggleFire()
+    public void ToggleFire(Transform t)
     {
         activeWire = !activeWire;
-        SetFire(activeWire);
+        SetFire(activeWire, t);
     }
 }

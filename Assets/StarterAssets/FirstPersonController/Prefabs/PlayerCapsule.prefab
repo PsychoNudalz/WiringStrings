@@ -377,6 +377,11 @@ MonoBehaviour:
   - {fileID: 8722124097751146694}
   - {fileID: 7354725420092404028}
   target: {fileID: 0}
+  head: {fileID: 3211741941663030229}
+  range: 30
+  layerMask:
+    serializedVersion: 2
+    m_Bits: 128
 --- !u!1 &9204745110571668268
 GameObject:
   m_ObjectHideFlags: 0
